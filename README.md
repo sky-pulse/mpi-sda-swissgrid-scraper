@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a scraper repo that scrapes data from a live webcam 
+This is a scraper repo that scrapes data from Swissgrid
 
 ## Requirements
 
@@ -11,14 +11,14 @@ This is a scraper repo that scrapes data from a live webcam
 ### Run the container
 
 ```bash
-docker build -t mpi-webcam-scraper .
+docker build -t mpi-swissgrid-scraper .
 ```
 
 ```bash
 docker run --rm \
-    --name mpi-webcam-scraper \
+    --name mpi-swissgrid-scraper \
     --net="host" \
-    mpi-webcam-scraper
+    mpi-swissgrid-scraper
 ```
 
 ## Development
@@ -31,6 +31,6 @@ pip install -r requirements.txt
 
 ## Usage
 
-To take screenshots images from a webcam URL at regular intervals, you can use `demo_URL.sh` as an example.
+under construction...
 
 
