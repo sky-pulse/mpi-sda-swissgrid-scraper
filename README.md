@@ -1,4 +1,4 @@
-# mpi-sda-webcam-scraper
+# mpi-sda-swissgrid-scraper
 
 ## Description
 
