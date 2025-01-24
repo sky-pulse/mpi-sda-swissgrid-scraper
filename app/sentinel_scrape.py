@@ -5,7 +5,7 @@ import os
 import logging
 import requests
 
-def get_satellite_data(coords, start_date, end_date, resolution, image_dir, data_type, sentinel_client_id, sentinel_client_secret):
+def get_satellite_data(coords, date, resolution, image_dir, data_type, sentinel_client_id, sentinel_client_secret):
   
   logging.basicConfig(level=logging.INFO)
   logger = logging.getLogger(__name__)
@@ -13,19 +13,10 @@ def get_satellite_data(coords, start_date, end_date, resolution, image_dir, data
     config = SHConfig()
     config.sh_client_id = sentinel_client_id
     config.sh_client_secret = sentinel_client_secret
-    url = "https://services.sentinel-hub.com/oauth/token"
-    payload = {
-        "grant_type": "client_credentials",
-        "client_id": sentinel_client_id,
-        "client_secret": sentinel_client_secret
-    }
-    response = requests.post(url, data=payload)
-    if response.status_code == 200:  
-      logger.info("Sentinel Hub credentials are correct.")
-    else:
-      logger.error(f"Invalid Sentinel Hub credentials")
   except Exception as e:
-    raise e
+    logger.error(f"Error setting up Sentinel Hub configuration: {e}")
+    return None
+  
   
   bbox = BBox(bbox=coords, crs=CRS.WGS84)
   size = bbox_to_dimensions(bbox, resolution=resolution)
@@ -256,12 +247,12 @@ def get_satellite_data(coords, start_date, end_date, resolution, image_dir, data
       };
     }
     """
-
+  
   request = SentinelHubRequest(
     evalscript=evalscript,
     input_data=[SentinelHubRequest.input_data(
       data_collection=data_collection,
-      time_interval=(start_date, end_date)
+      time_interval=(date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'))
     )],
     responses=[SentinelHubRequest.output_response("default", MimeType.PNG)],
     bbox=bbox,
@@ -269,10 +260,7 @@ def get_satellite_data(coords, start_date, end_date, resolution, image_dir, data
     config=config
   )
   
-  response = request.get_data()
-  if response:
-        image_data = response[0]
-        image = Image.fromarray(np.uint8(image_data))
-        return image
-  else:
-        return None
+  data = request.get_data()[0]
+  image = Image.fromarray(np.uint8(data))
+  return image
+  

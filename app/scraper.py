@@ -8,6 +8,7 @@ from PIL import Image
 from io import BytesIO
 import logging
 import os
+import io
 from PIL import Image
 import pandas as pd
 from app.utils import generate_relative_path 
@@ -17,17 +18,17 @@ from app.sentinel_scrape import get_satellite_data
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def fetch_image(latitude: str, longitude: str, start_date: datetime, end_date: datetime, resolution: int, image_dir: str, data_type: str, sentinel_client_secret: str, sentinel_client_id: str) -> Image.Image | None:
+def fetch_image(latitude: str, longitude: str, date:datetime, resolution: int, image_dir: str, data_type: str, sentinel_client_secret: str, sentinel_client_id: str) -> Image.Image | None:
     latitude = float(latitude)
     longitude = float(longitude)
     buffer = 0.02 # Small buffer for bounding box
     coords = (longitude - buffer, latitude - buffer, longitude + buffer, latitude + buffer)
     try:
-        image = get_satellite_data(coords, start_date, end_date, resolution, image_dir, data_type, sentinel_client_secret, sentinel_client_id)
-        image = Image.open(image)
+        image = get_satellite_data(coords, date, resolution, image_dir, data_type, sentinel_client_secret, sentinel_client_id)
+        #image = Image.open(io.BytesIO(image))
         return image
     except Exception as e:
-        logger.warning(f"Failed to retrieve {data_type} image between {start_date} and {end_date} due to error: {e}")
+        logger.warning(f"Failed to retrieve {data_type} image for {date} due to error: {e}")
         return None
 
 
@@ -62,12 +63,13 @@ def scrape(case_study_name: str, job_id: int, tracer_id: str, scraped_data_repos
         image_dir = os.path.join(file_dir, "images")
         os.makedirs(image_dir, exist_ok=True)
         for date in dates:
-            image = fetch_image(latitude, longitude, start_date, end_date, resolution, image_dir, data_type, sentinel_client_secret, sentinel_client_id)
+            image = fetch_image(latitude, longitude, date, resolution, image_dir, data_type, sentinel_client_id, sentinel_client_secret)
+            
             unix_timestamp = int(date.timestamp())
 
             if image is None:
                 relative_path = None
-                raise Exception(f"Could not fetch image for {date}, with Unix timestamp {unix_timestamp}")
+                raise Exception(f"Image for {date} could not be fetched")
 
             file_extension = image.format.lower() if image.format else "png"
             image_filename = f"Swissgrid_test.{file_extension}"
@@ -75,8 +77,6 @@ def scrape(case_study_name: str, job_id: int, tracer_id: str, scraped_data_repos
             os.makedirs(os.path.dirname(image_path), exist_ok=True)
             save_image(image, image_path, factor=1.5 / 255, clip_range=(0, 1))
             logger.info(f"Scraped Image at {time.time()} and saved to: {image_path}")
-            dd_mm_yy = date.strftime("%d_%m_%y")
-
             relative_path = generate_relative_path(
             case_study_name=case_study_name,
             tracer_id=tracer_id,

@@ -31,6 +31,11 @@ pip install -r requirements.txt
 
 ## Usage
 
-under construction...
+Ensure all the required command lines argument are present in the bash file(run.sh)
+
+You can run a demo using - 
+```bash
+./run.sh
+```
 
 
