@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np
 import os
 import logging
+import requests
 
 def get_satellite_data(coords, start_date, end_date, resolution, image_dir, data_type, sentinel_client_id, sentinel_client_secret):
   
@@ -12,12 +13,20 @@ def get_satellite_data(coords, start_date, end_date, resolution, image_dir, data
     config = SHConfig()
     config.sh_client_id = sentinel_client_id
     config.sh_client_secret = sentinel_client_secret
-    catalog = SentinelHubCatalog(config=config)
-    catalog.get_info()
-    logger.info("Sentinel Hub credentials are correct.")
+    url = "https://services.sentinel-hub.com/oauth/token"
+    payload = {
+        "grant_type": "client_credentials",
+        "client_id": sentinel_client_id,
+        "client_secret": sentinel_client_secret
+    }
+    response = requests.post(url, data=payload)
+    if response.status_code == 200:  
+      logger.info("Sentinel Hub credentials are correct.")
+    else:
+      logger.error(f"Invalid Sentinel Hub credentials")
   except Exception as e:
-    logger.error(f"Invalid Sentinel Hub credentials: {e}")
-    
+    raise e
+  
   bbox = BBox(bbox=coords, crs=CRS.WGS84)
   size = bbox_to_dimensions(bbox, resolution=resolution)
   logger.debug(f"Image shape at {resolution} m resolution: {size} pixels")
