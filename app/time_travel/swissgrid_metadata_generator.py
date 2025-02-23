@@ -11,7 +11,7 @@ from app.sdk.models import (
 )
 from app.sdk.scraped_data_repository import ScrapedDataRepository
 from app.time_travel.models import Error, Image, KeyFrame, Metadata, SwissgridRowSchema
-from utils import parse_relative_path
+from app.utils import parse_relative_path
 
 
 logger = logging.getLogger(__name__)
