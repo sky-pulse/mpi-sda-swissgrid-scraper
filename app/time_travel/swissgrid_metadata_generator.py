@@ -46,7 +46,7 @@ def generate_time_travel_metadata(
     failed = False
     timestamps: List[str] = []
     relative_paths_for_agent: List[str] = []
-
+    relevant_source_data = [z for z in relevant_source_data if not z.relative_path.endswith(".json")]
     IMAGE_SEQUENCE = [
         "thermal",
         "natural",
@@ -202,6 +202,12 @@ def generate_time_travel_metadata(
 
         # Make prediction for the given timestamp
         try:
+            logger.info(f"Making prediction for timestamp: {timestamp} to {predict_url}")
+            payload = {
+                    "relative_paths": images_paths,
+                    "model_name": prediction_model_name,
+            }
+            logger.info(f"Payload: {payload}")
             response = requests.post(
                 predict_url,
                 json={
@@ -209,6 +215,7 @@ def generate_time_travel_metadata(
                     "model_name": prediction_model_name,
                 },
             )
+            logger.info(f"Recieved Response {response.status_code}: {response.text}")
             if response.status_code != 200:
                 keyframe.data.append(
                     Error(

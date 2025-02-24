@@ -205,5 +205,5 @@ if __name__ == "__main__":
         predict_url=args.predict_url,
         prediction_model_name=args.prediction_model_name,
         power_plant_name=args.power_plant_name,
-        power_plant_bounding_box=args.power_plant_bounding
+        power_plant_bounding_box=args.power_plant_bounding_box,
     )
