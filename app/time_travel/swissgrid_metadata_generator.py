@@ -227,6 +227,7 @@ def generate_time_travel_metadata(
 
             try:
                 prediction_result = response.json()
+                prediction_result = prediction_result["data"] 
             except Exception as e:
                 keyframe.data.append(
                     Error(
