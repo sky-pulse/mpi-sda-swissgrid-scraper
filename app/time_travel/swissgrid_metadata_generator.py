@@ -182,12 +182,14 @@ def generate_time_travel_metadata(
                     )
                 )
                 continue
-            
+
             if hash == "empty":
-                keyframe.images.append(Error(
-                    errorMessage=f"No Satellite Image was found for this timestamp. Possibly the satellite did not pass over the given coordinates.",
-                    errorName="EmptyImage",
-                ))
+                keyframe.images.append(
+                    Error(
+                        errorMessage=f"No Satellite Image was found for this timestamp. Possibly the satellite did not pass over the given coordinates.",
+                        errorName="EmptyImage",
+                    )
+                )
                 continue
 
             img_to_append = Image(
@@ -198,54 +200,53 @@ def generate_time_travel_metadata(
 
             keyframe.images.append(img_to_append)
 
-            # Make prediction for the given timestamp
-            try:
-                response = requests.post(
-                    predict_url,
-                    json={
-                        "relative_paths": images_paths,
-                        "model_name": prediction_model_name,
-                    },
+        # Make prediction for the given timestamp
+        try:
+            response = requests.post(
+                predict_url,
+                json={
+                    "relative_paths": images_paths,
+                    "model_name": prediction_model_name,
+                },
+            )
+            if response.status_code != 200:
+                keyframe.data.append(
+                    Error(
+                        errorName="PredictionError",
+                        errorMessage=f"Error while making prediction: Status Code: {response.status_code}. Data {response.text}",
+                    )
                 )
-                if response.status_code != 200:
-                    keyframe.data.append(
-                        Error(
-                            errorName="PredictionError",
-                            errorMessage=f"Error while making prediction: Status Code: {response.status_code}. Data {response.text}",
-                        )
-                    )
-                    continue
+                continue
 
-                try:
-                    prediction_result = response.json()
-                except Exception as e:
-                    keyframe.data.append(
-                        Error(
-                            errorName="PredictionError",
-                            errorMessage=f"Could not decode JSON response from the predictor service. {e}",
-                        )
-                    )
-                    continue
-  
-                for data_row in prediction_result:
-                    keyframe.data.append(
-                        SwissgridRowSchema(
-                            timestamp=timestamp,
-                            model=data_row["label"],
-                            prediction=data_row["prediction"],
-                            confidence=data_row["confidence"],
-                        )
-                    )
-
+            try:
+                prediction_result = response.json()
             except Exception as e:
                 keyframe.data.append(
                     Error(
                         errorName="PredictionError",
-                        errorMessage=f"Error while making prediction: {e}",
+                        errorMessage=f"Could not decode JSON response from the predictor service. {e}",
                     )
                 )
-            metadata.keyframes.append(keyframe)
+                continue
 
+            for data_row in prediction_result:
+                keyframe.data.append(
+                    SwissgridRowSchema(
+                        timestamp=timestamp,
+                        model=data_row["label"],
+                        prediction=data_row["prediction"],
+                        confidence=data_row["confidence"],
+                    )
+                )
+
+        except Exception as e:
+            keyframe.data.append(
+                Error(
+                    errorName="PredictionError",
+                    errorMessage=f"Error while making prediction: {e}",
+                )
+            )
+        metadata.keyframes.append(keyframe)
 
     with tempfile.NamedTemporaryFile(suffix=".json", delete=True) as out:
         with open(out.name, "w") as f:
